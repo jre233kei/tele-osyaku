@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Tere-Oshaku</title>
+</head>
+
+<body>
+  <p>id:<span id="my-id"></span></p>
+  <form id="to-form">
+    <label>to-id</label>
+    <input id="to-id" />
+  </form>
+  <form id="angle-form">
+    <label>angle</label>
+    <input id="angle" />
+  </form>
+  <p>current angle<span id="current-angle"></span></p>
+
+  <div class="container">
+    <div id="rotate-container" draggable="true">
+    </div>
+    <div id="rotate-box">
+    </div>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    const angleForm = document.getElementById("angle-form");
+    const angle = document.getElementById("angle")
+    const toForm = document.getElementById("to-form");
+    const toIdElem = document.getElementById("to-id");
+    const myId = document.getElementById("my-id")
+    const currentAngle = document.getElementById("current-angle")
+    const rotateBox = document.getElementById("rotate-box");
+    const rotateContainer = document.getElementById("rotate-container");
+
+    let startY = 0;
+
+    rotateContainer.addEventListener("dragstart", event => {
+      startY = event.offsetY;
+    })
+
+    rotateContainer.addEventListener("drag", (event) => {
+      console.log(event.offsetY)
+      const rot = `rotate(${Math.asin((event.offsetY - startY) / 300) * 180 / Math.PI}deg)`;
+      console.log(rot)
+      rotateBox.style.transform = rot
+
+      socket.emit('rotate', { to: toId, content: rot });
+
+    })
+
+    let toId = "";
+
+    toForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (toIdElem.value) {
+        toId = toIdElem.value;
+      }
+    })
+
+    angleForm.addEventListener('submit', function (e) {
+      console.log("submit")
+      e.preventDefault();
+    })
+
+    socket.on("client-connect", (arg) => {
+      myId.innerText = arg;
+    })
+
+    socket.on("rotate-react", (arg) => {
+      console.log(arg)
+      currentAngle.innerText = arg.content
+      rotateBox.style.transform = arg.content;
+    })
+
+  </script>
+</body>
+
+<style>
+  .container {
+    position: relative;
+  }
+
+  #rotate-container {
+    cursor: pointer;
+    position: absolute;
+    width: 200px;
+    height: 300px;
+    z-index: 1;
+    opacity: 0.001;
+  }
+
+  #rotate-container.active {
+    display: none;
+  }
+
+  #rotate-box {
+    position: absolute;
+    width: 200px;
+    height: 300px;
+    background-color: aqua;
+  }
+</style>
+
+</html>
